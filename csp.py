@@ -51,30 +51,30 @@ class CSP(search.Problem):
         display(a)              Print a human-readable representation
     """
 
-    def __init__(self, variables, domains, neighbors, constraints):
+    def __init__(self, variables: list, domains: dict, neighbors: dict, constraints):
         """Construct a CSP problem. If variables is empty, it becomes domains.keys()."""
         super().__init__(())
         variables = variables or list(domains.keys())
-        self.variables = variables
-        self.domains = domains
-        self.neighbors = neighbors
+        self.variables: list = variables
+        self.domains: dict = domains
+        self.neighbors: dict = neighbors
         self.constraints = constraints
         self.curr_domains = None
         self.nassigns = 0
 
-    def assign(self, var, val, assignment):
+    def assign(self, var, val, assignment: dict) -> None:
         """Add {var: val} to assignment; Discard the old value if any."""
         assignment[var] = val
         self.nassigns += 1
 
-    def unassign(self, var, assignment):
+    def unassign(self, var, assignment: dict) -> None:
         """Remove {var: val} from assignment.
         DO NOT call this if you are changing a variable to a new value;
         just call assign for that."""
         if var in assignment:
             del assignment[var]
 
-    def nconflicts(self, var, val, assignment):
+    def nconflicts(self, var, val, assignment: dict) -> int:
         """Return the number of conflicts var=val has with other variables."""
 
         # Subclasses may implement this more efficiently
@@ -83,14 +83,14 @@ class CSP(search.Problem):
 
         return count(conflict(v) for v in self.neighbors[var])
 
-    def display(self, assignment):
+    def display(self, assignment: dict) -> None:
         """Show a human-readable representation of the CSP."""
         # Subclasses can print in a prettier way, or display with a GUI
         print(assignment)
 
     # These methods are for the tree and graph-search interface:
 
-    def actions(self, state):
+    def actions(self, state) -> list:
         """Return a list of applicable actions: non conflicting
         assignments to an unassigned variable."""
         if len(state) == len(self.variables):
@@ -159,6 +159,7 @@ class CSP(search.Problem):
 
 # ______________________________________________________________________________
 # Constraint Propagation with AC3
+# ______________________________________________________________________________
 
 
 def no_arc_heuristic(csp, queue):
@@ -169,7 +170,11 @@ def dom_j_up(csp, queue):
     return SortedSet(queue, key=lambda t: neg(len(csp.curr_domains[t[1]])))
 
 
-def AC3(csp, queue=None, removals=None, arc_heuristic=dom_j_up):
+# AC-3 (Arc Consistency algorithm) is a constraint propagation algorithm 
+# that works on binary constraints. It is a special case of the more general 
+# AC-n algorithm, which works on n-ary constraints. AC-3 is a special case 
+# of the general AC-n algorithm that works on binary constraints.
+def AC3(csp: CSP, queue=None, removals=None, arc_heuristic=dom_j_up):
     """[Figure 6.3]"""
     if queue is None:
         queue = {(Xi, Xk) for Xi in csp.variables for Xk in csp.neighbors[Xi]}
@@ -188,7 +193,7 @@ def AC3(csp, queue=None, removals=None, arc_heuristic=dom_j_up):
     return True, checks  # CSP is satisfiable
 
 
-def revise(csp, Xi, Xj, removals, checks=0):
+def revise(csp: CSP, Xi, Xj, removals, checks=0):
     """Return true if we remove a value."""
     revised = False
     for x in csp.curr_domains[Xi][:]:
@@ -210,7 +215,7 @@ def revise(csp, Xi, Xj, removals, checks=0):
 # Constraint Propagation with AC3b: an improved version
 # of AC3 with double-support domain-heuristic
 
-def AC3b(csp, queue=None, removals=None, arc_heuristic=dom_j_up):
+def AC3b(csp: CSP, queue=None, removals=None, arc_heuristic=dom_j_up):
     if queue is None:
         queue = {(Xi, Xk) for Xi in csp.variables for Xk in csp.neighbors[Xi]}
     csp.support_pruning()
@@ -260,7 +265,7 @@ def AC3b(csp, queue=None, removals=None, arc_heuristic=dom_j_up):
     return True, checks  # CSP is satisfiable
 
 
-def partition(csp, Xi, Xj, checks=0):
+def partition(csp: CSP, Xi, Xj, checks=0):
     Si_p = set()
     Sj_p = set()
     Sj_u = set(csp.curr_domains[Xj])
@@ -294,7 +299,7 @@ def partition(csp, Xi, Xj, checks=0):
 
 # Constraint Propagation with AC4
 
-def AC4(csp, queue=None, removals=None, arc_heuristic=dom_j_up):
+def AC4(csp: CSP, queue=None, removals=None, arc_heuristic=dom_j_up):
     if queue is None:
         queue = {(Xi, Xk) for Xi in csp.variables for Xk in csp.neighbors[Xi]}
     csp.support_pruning()
@@ -343,18 +348,18 @@ def AC4(csp, queue=None, removals=None, arc_heuristic=dom_j_up):
 # Variable ordering
 
 
-def first_unassigned_variable(assignment, csp):
+def first_unassigned_variable(assignment, csp: CSP):
     """The default variable order."""
     return first([var for var in csp.variables if var not in assignment])
 
 
-def mrv(assignment, csp):
+def mrv(assignment, csp: CSP):
     """Minimum-remaining-values heuristic."""
     return argmin_random_tie([v for v in csp.variables if v not in assignment],
                              key=lambda var: num_legal_values(csp, var, assignment))
 
 
-def num_legal_values(csp, var, assignment):
+def num_legal_values(csp: CSP, var, assignment):
     if csp.curr_domains:
         return len(csp.curr_domains[var])
     else:
@@ -364,12 +369,12 @@ def num_legal_values(csp, var, assignment):
 # Value ordering
 
 
-def unordered_domain_values(var, assignment, csp):
+def unordered_domain_values(var, assignment, csp: CSP):
     """The default value order."""
     return csp.choices(var)
 
 
-def lcv(var, assignment, csp):
+def lcv(var, assignment, csp: CSP):
     """Least-constraining-values heuristic."""
     return sorted(csp.choices(var), key=lambda val: csp.nconflicts(var, val, assignment))
 
@@ -377,11 +382,11 @@ def lcv(var, assignment, csp):
 # Inference
 
 
-def no_inference(csp, var, value, assignment, removals):
+def no_inference(csp: CSP, var, value, assignment, removals):
     return True
 
 
-def forward_checking(csp, var, value, assignment, removals):
+def forward_checking(csp: CSP, var, value, assignment, removals):
     """Prune neighbor values inconsistent with var=value."""
     csp.support_pruning()
     for B in csp.neighbors[var]:
@@ -394,7 +399,7 @@ def forward_checking(csp, var, value, assignment, removals):
     return True
 
 
-def mac(csp, var, value, assignment, removals, constraint_propagation=AC3b):
+def mac(csp: CSP, var, value, assignment, removals, constraint_propagation=AC3b):
     """Maintain arc consistency."""
     return constraint_propagation(csp, {(X, var) for X in csp.neighbors[var]}, removals)
 
@@ -402,7 +407,7 @@ def mac(csp, var, value, assignment, removals, constraint_propagation=AC3b):
 # The search, proper
 
 
-def backtracking_search(csp, select_unassigned_variable=first_unassigned_variable,
+def backtracking_search(csp: CSP, select_unassigned_variable=first_unassigned_variable,
                         order_domain_values=unordered_domain_values, inference=no_inference):
     """[Figure 6.5]"""
 
@@ -431,7 +436,7 @@ def backtracking_search(csp, select_unassigned_variable=first_unassigned_variabl
 # Min-conflicts Hill Climbing search for CSPs
 
 
-def min_conflicts(csp, max_steps=100000):
+def min_conflicts(csp: CSP, max_steps=100000):
     """Solve a CSP by stochastic Hill Climbing on the number of conflicts."""
     # Generate a complete assignment for all variables (probably with conflicts)
     csp.current = current = {}

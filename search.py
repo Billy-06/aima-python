@@ -91,7 +91,7 @@ class Node:
     def __lt__(self, node):
         return self.state < node.state
 
-    def expand(self, problem):
+    def expand(self, problem: Problem):
         """List the nodes reachable in one step from this node."""
         return [self.child_node(problem, action)
                 for action in problem.actions(self.state)]
@@ -175,7 +175,7 @@ class SimpleProblemSolvingAgentProgram:
 # Uninformed Search algorithms
 
 
-def breadth_first_tree_search(problem):
+def breadth_first_tree_search(problem: Problem):
     """
     [Figure 3.7]
     Search the shallowest nodes in the search tree first.
@@ -187,14 +187,14 @@ def breadth_first_tree_search(problem):
     frontier = deque([Node(problem.initial)])  # FIFO queue
 
     while frontier:
-        node = frontier.popleft()
+        node: Node = frontier.popleft()
         if problem.goal_test(node.state):
             return node
         frontier.extend(node.expand(problem))
     return None
 
 
-def depth_first_tree_search(problem):
+def depth_first_tree_search(problem: Problem):
     """
     [Figure 3.7]
     Search the deepest nodes in the search tree first.
@@ -203,17 +203,17 @@ def depth_first_tree_search(problem):
     Repeats infinitely in case of loops.
     """
 
-    frontier = [Node(problem.initial)]  # Stack
+    frontier = [Node(problem.initial)]  # Stack -> LIFO
 
     while frontier:
-        node = frontier.pop()
+        node: Node = frontier.pop()
         if problem.goal_test(node.state):
             return node
         frontier.extend(node.expand(problem))
     return None
 
 
-def depth_first_graph_search(problem):
+def depth_first_graph_search(problem: Problem):
     """
     [Figure 3.7]
     Search the deepest nodes in the search tree first.
@@ -235,7 +235,7 @@ def depth_first_graph_search(problem):
     return None
 
 
-def breadth_first_graph_search(problem):
+def breadth_first_graph_search(problem : Problem):
     """[Figure 3.11]
     Note that this function can be implemented in a
     single line as below:
@@ -257,7 +257,7 @@ def breadth_first_graph_search(problem):
     return None
 
 
-def best_first_graph_search(problem, f, display=False):
+def best_first_graph_search(problem : Problem, f, display: bool=False):
     """Search the nodes with the lowest f scores first.
     You specify the function f(node) that you want to minimize; for example,
     if f is a heuristic estimate to the goal, then we have greedy best
@@ -287,15 +287,15 @@ def best_first_graph_search(problem, f, display=False):
     return None
 
 
-def uniform_cost_search(problem, display=False):
+def uniform_cost_search(problem :Problem, display=False):
     """[Figure 3.14]"""
     return best_first_graph_search(problem, lambda node: node.path_cost, display)
 
 
-def depth_limited_search(problem, limit=50):
+def depth_limited_search(problem: Problem, limit=50):
     """[Figure 3.17]"""
 
-    def recursive_dls(node, problem, limit):
+    def recursive_dls(node: Node, problem: Problem, limit):
         if problem.goal_test(node.state):
             return node
         elif limit == 0:
