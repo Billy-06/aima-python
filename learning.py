@@ -7,7 +7,7 @@ from statistics import stdev
 from qpsolvers import solve_qp
 
 from probabilistic_learning import NaiveBayesLearner
-from utils import *
+from .utils import *
 
 
 class DataSet:
